@@ -1,6 +1,6 @@
 # ReversiblePipeline
 
-This is a Matlab implementation of a pre-learned image 
+This is an implementation of a pre-learned camera image
 processing model. A description of the model can be found in
 "A New In-Camera Imaging Model for Color Computer Vision 
 and its Application" by Seon Joo Kim, Hai Ting Lin, 
