@@ -9,8 +9,8 @@ be found at the original project page. This particular
 implementation was written by Mark Buckler.
 
 Original Project Page:
-http://www.comp.nus.edu.sg/~brown/radiometric\_calibration/
+* http://www.comp.nus.edu.sg/~brown/radiometric_calibration/
 
 Model Format Readme:
-http://www.comp.nus.edu.sg/~brown/radiometric\_calibration/datasets/Model\_param/readme.pdf
+* http://www.comp.nus.edu.sg/~brown/radiometric_calibration/datasets/Model_param/readme.pdf
 
