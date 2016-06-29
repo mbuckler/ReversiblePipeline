@@ -53,13 +53,17 @@ function ImgPipe_Matlab
         [1001, 2251]; ... % 6
         [1501, 2251]; ... % 7
         [2001, 2251]; ... % 8
+        [551,  1751]; ... % 9
+        [1001, 1751]; ... % 10
+        [1501, 1751]; ... % 11
+        [2001, 1751]; ... % 12
     ];
     
     % Number of patch tests to run
-    patchnum = 8;
+    patchnum = 12;
 
     % Define patch size (patch width and height in pixels
-    patchsize = 20;
+    patchsize = 10;
     
     % Initialize results
     forward_results  = zeros(patchnum,3,3);
