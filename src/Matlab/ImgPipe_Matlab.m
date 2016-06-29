@@ -19,7 +19,7 @@
 
 function ImgPipe_Matlab
     % Model directory
-    model_dir      = '../../camera_models/NikonD7000/';
+    model_dir      = '../../camera_models/NikonD7000/FL(L14)/';
 
     % Image directory
     image_dir      = '../../imgs/NikonD7000FL/';
@@ -59,7 +59,7 @@ function ImgPipe_Matlab
     patchnum = 8;
 
     % Define patch size (patch width and height in pixels
-    patchsize = 10;
+    patchsize = 20;
     
     % Initialize results
     forward_results  = zeros(patchnum,3,3);
