@@ -19,8 +19,13 @@
 
 function ImgPipe_Matlab
     % Model directory
-    model_dir      = '../../camera_models/NikonD7000/FL(L14)/';
+    model_dir      = '../../camera_models/NikonD7000/';
 
+    % White balance index (select from the transform file)
+    % First possiblilty of white balance in file has wb_index of 1
+    % For more information see the model readme
+    wb_index       = 6;
+    
     % Image directory
     image_dir      = '../../imgs/NikonD7000FL/';
     
@@ -74,7 +79,7 @@ function ImgPipe_Matlab
 
         % Run the forward model on the patch
         [demosaiced, transformed, gamutmapped, tonemapped, forward_ref] = ...
-            ForwardPipe(model_dir, image_dir, results_dir, ...
+            ForwardPipe(model_dir, image_dir, results_dir, wb_index, ...
             raw_image_name, jpg_image_name, ... 
             patchstarts(i,2), patchstarts(i,1), patchsize, i);
         
@@ -87,7 +92,7 @@ function ImgPipe_Matlab
         
         % Run the backward model on the patch
         [revtonemapped, revgamutmapped, revtransformed, remosaiced, backward_ref] = ...
-            BackwardPipe(model_dir, image_dir, results_dir, ...
+            BackwardPipe(model_dir, image_dir, results_dir, wb_index, ...
             jpg_image_name, raw_image_name, ... 
             patchstarts(i,2), patchstarts(i,1), patchsize, i);
         
@@ -109,7 +114,7 @@ end
 
 
 function [demosaiced, transformed, gamutmapped, tonemapped, ref_image] = ...
-    ForwardPipe(model_dir, image_dir, results_dir, ...
+    ForwardPipe(model_dir, image_dir, results_dir, wb_index, ...
     in_image_name, ref_image_name, ystart, xstart, patchsize, patchid)
 
     % Establish patch
@@ -137,12 +142,16 @@ function [demosaiced, transformed, gamutmapped, tonemapped, ref_image] = ...
     % Color space transform
     Ts             = transforms_file(2:4,:);
 
+    % Calculate base for the white balance transform selected
+    % For more details see the camera model readme
+    wb_base        = 6 + 5*(wb_index-1);
+    
     % White balance transform
-    Tw             = diag(transforms_file(9,:));
+    Tw             = diag(transforms_file(wb_base+3,:));
 
     % Combined transforms
     TsTw           = Ts*Tw;
-    TsTw_file      = transforms_file(6:8,:);
+    TsTw_file      = transforms_file(wb_base:wb_base+2,:);
 
     % Perform quick check to determine equivalence with provided model
     % Round to nearest 4 decimal representation for check
@@ -249,7 +258,7 @@ function [demosaiced, transformed, gamutmapped, tonemapped, ref_image] = ...
 end 
 
 function [revtonemapped, revgamutmapped, revtransformed, remosaiced, ref_image_colored] = ...
-    BackwardPipe(model_dir, image_dir, results_dir, ...
+    BackwardPipe(model_dir, image_dir, results_dir, wb_index, ...
     in_image_name, ref_image_name, ystart, xstart, patchsize, patchid)
 
     % Establish patch
@@ -278,12 +287,16 @@ function [revtonemapped, revgamutmapped, revtransformed, remosaiced, ref_image_c
     % Color space transform
     Ts             = transforms_file(2:4,:);
 
+    % Calculate base for the white balance transform selected
+    % For more details see the camera model readme
+    wb_base        = 6 + 5*(wb_index-1);
+    
     % White balance transform
-    Tw             = diag(transforms_file(9,:));
+    Tw             = diag(transforms_file(wb_base+3,:));
 
     % Combined transforms
     TsTw           = Ts*Tw;
-    TsTw_file      = transforms_file(6:8,:);
+    TsTw_file      = transforms_file(wb_base:wb_base+2,:);
 
     % Perform quick check to determine equivalence with provided model
     % Round to nearest 4 decimal representation for check
