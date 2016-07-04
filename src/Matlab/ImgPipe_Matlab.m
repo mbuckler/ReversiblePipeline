@@ -22,7 +22,7 @@ function ImgPipe_Matlab
     model_dir      = '../../camera_models/NikonD7000/';
 
     % White balance index (select from the transform file)
-    % First possiblilty of white balance in file has wb_index of 1
+    % First white balance in file has wb_index of 1
     % For more information see the model readme
     wb_index       = 6;
     
