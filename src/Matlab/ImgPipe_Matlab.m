@@ -125,28 +125,24 @@ function [demosaiced, transformed, gamutmapped, tonemapped, ref_image] = ...
     % setting and with Fl(L14)/florescent color.
 
     % Model file reading
-    transforms_file  = table2array( readtable( ...
-        strcat(model_dir,'raw2jpg_transform.txt'), ...
-        'Delimiter',' ','ReadVariableNames',false));
-    ctrl_points_file = table2array( readtable( ...
-        strcat(model_dir,'raw2jpg_ctrlPoints.txt'), ...
-        'Delimiter',' ','ReadVariableNames',false));
-    coeficients_file = table2array( readtable( ...
-        strcat(model_dir,'raw2jpg_coefs.txt'), ...
-        'Delimiter',' ','ReadVariableNames',false));
-    resp_funct_file  = table2array( readtable( ...
-        strcat(model_dir,'raw2jpg_respFcns.txt'), ...
-        'Delimiter',' ','ReadVariableNames',false));
+    transforms_file  = dlmread( ...
+        strcat(model_dir,'raw2jpg_transform.txt'));
+    ctrl_points_file = dlmread( ...
+        strcat(model_dir,'raw2jpg_ctrlPoints.txt'));
+    coeficients_file = dlmread( ...
+        strcat(model_dir,'raw2jpg_coefs.txt'));
+    resp_funct_file  = dlmread( ...
+        strcat(model_dir,'raw2jpg_respFcns.txt'));
 
     % Color space transform
-    Ts             = transforms_file(1:3,:);
+    Ts             = transforms_file(2:4,:);
 
     % White balance transform
-    Tw             = diag(transforms_file(8,:));
+    Tw             = diag(transforms_file(9,:));
 
     % Combined transforms
     TsTw           = Ts*Tw;
-    TsTw_file      = transforms_file(5:7,:);
+    TsTw_file      = transforms_file(6:8,:);
 
     % Perform quick check to determine equivalence with provided model
     % Round to nearest 4 decimal representation for check
@@ -156,17 +152,17 @@ function [demosaiced, transformed, gamutmapped, tonemapped, ref_image] = ...
         'Transform multiplication not equal to result found in model file, or import failed' ) 
 
     % Gamut mapping: Control points
-    ctrl_points    = ctrl_points_file;
+    ctrl_points    = ctrl_points_file(2:end,:);
 
     % Gamut mapping: Weights
-    weights        = coeficients_file(1:(size(coeficients_file,1)-4),:);
+    weights        = coeficients_file(2:(size(coeficients_file,1)-4),:);
 
     % Gamut mapping: c
     c              = coeficients_file((size(coeficients_file,1)-3):end,:);
 
     % Tone mapping (reverse function is what is contained within model
     % file)
-    frev           = resp_funct_file;
+    frev           = resp_funct_file(2:end,:);
 
     %==============================================================
     % Import Raw Image Data
@@ -269,28 +265,25 @@ function [revtonemapped, revgamutmapped, revtransformed, remosaiced, ref_image_c
     % setting and with Fl(L14)/florescent color.
 
     % Model file reading
-    transforms_file  = table2array( readtable( ...
-        strcat(model_dir,'jpg2raw_transform.txt'), ...
-        'Delimiter',' ','ReadVariableNames',false));
-    ctrl_points_file = table2array( readtable( ...
-        strcat(model_dir,'jpg2raw_ctrlPoints.txt'), ...
-        'Delimiter',' ','ReadVariableNames',false));
-    coeficients_file = table2array( readtable( ...
-        strcat(model_dir,'jpg2raw_coefs.txt'), ...
-        'Delimiter',' ','ReadVariableNames',false));
-    resp_funct_file  = table2array( readtable( ...
-        strcat(model_dir,'jpg2raw_respFcns.txt'), ...
-        'Delimiter',' ','ReadVariableNames',false));
+    % Model file reading
+    transforms_file  = dlmread( ...
+        strcat(model_dir,'jpg2raw_transform.txt'));
+    ctrl_points_file = dlmread( ...
+        strcat(model_dir,'jpg2raw_ctrlPoints.txt'));
+    coeficients_file = dlmread( ...
+        strcat(model_dir,'jpg2raw_coefs.txt'));
+    resp_funct_file  = dlmread( ...
+        strcat(model_dir,'jpg2raw_respFcns.txt'));
 
     % Color space transform
-    Ts             = transforms_file(1:3,:);
+    Ts             = transforms_file(2:4,:);
 
     % White balance transform
-    Tw             = diag(transforms_file(8,:));
+    Tw             = diag(transforms_file(9,:));
 
     % Combined transforms
     TsTw           = Ts*Tw;
-    TsTw_file      = transforms_file(5:7,:);
+    TsTw_file      = transforms_file(6:8,:);
 
     % Perform quick check to determine equivalence with provided model
     % Round to nearest 4 decimal representation for check
@@ -298,19 +291,19 @@ function [revtonemapped, revgamutmapped, revtransformed, remosaiced, ref_image_c
     TsTw_file_4dec = round(TsTw_file*10000)/10000;
     assert( isequal( TsTw_4dec, TsTw_file_4dec), ...
         'Transform multiplication not equal to result found in model file, or import failed' ) 
-    
-    % Reverse Gamut mapping: Control points
-    ctrl_points    = ctrl_points_file;
 
-    % Reverse Gamut mapping: Weights
-    weights        = coeficients_file(1:(size(coeficients_file,1)-4),:);
+    % Gamut mapping: Control points
+    ctrl_points    = ctrl_points_file(2:end,:);
 
-    % Reverse Gamut mapping: c
+    % Gamut mapping: Weights
+    weights        = coeficients_file(2:(size(coeficients_file,1)-4),:);
+
+    % Gamut mapping: c
     c              = coeficients_file((size(coeficients_file,1)-3):end,:);
 
     % Tone mapping (reverse function is what is contained within model
     % file)
-    frev           = resp_funct_file;
+    frev           = resp_funct_file(2:end,:);
 
     %==============================================================
     % Import Image Data
