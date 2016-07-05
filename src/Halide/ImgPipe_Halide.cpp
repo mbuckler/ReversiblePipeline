@@ -11,14 +11,15 @@
 #include "halide_image_io.h"
 
 int main(int argc, char **argv) {
+  using namespace std;
 
-  struct testarray Ts;
+  vector<vector<float>> Ts;
 
   Ts = get_Ts(cam_model_path);
 
   for (int i=0; i<3; i++) {
     for (int j=0; j<3; j++) {
-      printf("%f\n",Ts.array_[i][j]);
+      printf("%f\n",Ts[i][j]);
     }
   }
 

@@ -17,11 +17,11 @@
 ///////////////////////////////////////////////////////////////
 
 // Demosaiced raw input (to forward pipeline)
-extern char demosaiced_image[] = 
+char demosaiced_image[] = 
 "../../imgs/NikonD7000FL/DSC_0916.NEF.raw_1C.tiff.demosaiced.tif";
 
 // Jpeg input (to backward pipeline)
-extern char jpg_image[] =
+char jpg_image[] =
 "../../imgs/NikonD7000FL/DSC_0916.JPG";
 
 ///////////////////////////////////////////////////////////////
@@ -29,17 +29,18 @@ extern char jpg_image[] =
 ///////////////////////////////////////////////////////////////
 
 // Path to the camera model to be used
-extern char cam_model_path[] =
+char cam_model_path[] =
 "../../camera_models/NikonD7000/";
 
 // White balance index (select white balance from transform file)
 // The first white balance in the file has a wb_index of 1
 // For more information on model format see the readme
-extern int wb_index = 
+int wb_index = 
 6;
 
 // Number of control points
-#define NUM_CTRL_PTS 3702
+const int num_ctrl_pts = 
+3702;
 
 ///////////////////////////////////////////////////////////////
 // Patches to test 
@@ -52,7 +53,7 @@ extern int wb_index =
 // pattern start if using the version of this pipeline with
 // demosaicing
 
-extern int patchstarts[12][2] = {
+const int patchstarts[12][2] = {
   {551,  2751},
   {1001, 2751},
   {1501, 2751},
@@ -68,9 +69,9 @@ extern int patchstarts[12][2] = {
 };
 
 // Height and width of patches
-extern int patchsize = 
+const int patchsize = 
 10;
 
 // Number of patches to test
-extern int patchnum  = 
+const int patchnum  = 
 1;

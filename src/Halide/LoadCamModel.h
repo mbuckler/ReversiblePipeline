@@ -7,9 +7,10 @@
 
 struct testarray { float array_[3][3]; };
 
+using namespace std;
 
 // Get color space transform
-struct testarray get_Ts(char* cam_model_path);
+vector<vector<float>> get_Ts(char* cam_model_path);
 
 // Get white balance transform
 float** get_Tw(char* cam_model_path, int wb_index);
