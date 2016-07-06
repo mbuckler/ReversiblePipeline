@@ -5,8 +5,6 @@
 #include <sstream>
 #include <iostream>
 
-struct testarray { float array_[3][3]; };
-
 using namespace std;
 
 // Get color space transform

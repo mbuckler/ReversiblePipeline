@@ -5,6 +5,7 @@
 #include "Halide.h"
 #include "ImgPipeConfig.h"
 #include "LoadCamModel.h"
+#include "MatrixOps.h"
 #include <stdio.h>
 #include "halide_image_io.h"
 
@@ -27,6 +28,8 @@ int main(int argc, char **argv) {
 
 int run_pipeline(bool direction) {
 
+  using namespace std;  
+
   // Declare model parameters
   vector<vector<float>> Ts, Tw, TsTw;
   vector<vector<float>> ctrl_pts, weights, coefs;
@@ -40,6 +43,14 @@ int run_pipeline(bool direction) {
   weights   = get_weights  (cam_model_path, num_ctrl_pts, direction);
   coefs     = get_coefs    (cam_model_path, num_ctrl_pts, direction);
   rev_tone  = get_rev_tone (cam_model_path);
+
+  // Verify that Ts*Tw = TsTw
+  
+  vector<float> a {5, 2};
+  vector<float> b {3, 2};
+  float test = dot_vecvec (a, b);
+
+  printf("test = %f\n\n",test);
 
   // Check Ts visually
   for (int i=0; i<3; i++) {
