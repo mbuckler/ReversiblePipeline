@@ -2,8 +2,54 @@
 
 using namespace std;
 
+// Transpose a matrix
+vector<vector<float>> transpose_mat (vector<vector<float>> inmat) {
+
+  // Get size of input
+  int in_width  = inmat[0].size();
+  int in_height = inmat.size();
+
+  // Define vectors
+  vector<vector<float>> outmat (in_width, vector<float>(in_height));
+
+  // Transpose the matrix
+  for (int i=0; i<in_height; i++) {
+    for (int j=0; j<in_width; j++) {
+      outmat[j][i] = inmat[i][j];
+    }
+  }
+
+  return outmat;
+
+}
+
 // Matrix Matrix Dot Product
 vector<vector<float>> dot_matmat (vector<vector<float>> a, vector<vector<float>> b) {
+
+  int width  = b[0].size();
+  int height = a.size();
+
+  int a_inner_dim = a[0].size();
+  int b_inner_dim = b.size();
+
+  // Define output size
+  vector<vector<float>> result (height, vector<float>(width));
+
+  // Take the transpose of b for more convenient multiplication
+  vector<vector<float>> b_trans = transpose_mat(b); 
+
+  // Verify that the inner dimensions are the same
+  if (a_inner_dim != b_inner_dim)
+    throw invalid_argument("Attempt to dot product matrices with different inner dimensions");
+   
+  // Multiply the matrices
+  for (int i=0; i<height; i++) {
+    for (int j=0; j<width; j++) {
+      result[i][j] = dot_vecvec(a[i],b_trans[j]);
+    }
+  }
+
+  return result;
 
 }
 
@@ -33,5 +79,21 @@ float dot_vecvec (vector<float> a, vector<float> b) {
 
 // Three by three matrix inversion
 vector<vector<float>> inv_3x3mat (vector<vector<float>> inmat) {
+
+}
+
+// Display matrix
+void disp_mat (vector<vector<float>> mat) {
+  
+  int height = mat.size();
+  int width  = mat[0].size();
+
+  for (int i=0; i<height; i++) {
+    for (int j=0; j<width; j++) {
+      printf("%f,",mat[i][j]);
+    }
+    printf("\n");
+  }
+  printf("\n");
 
 }

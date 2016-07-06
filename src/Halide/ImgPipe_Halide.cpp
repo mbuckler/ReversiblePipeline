@@ -46,19 +46,32 @@ int run_pipeline(bool direction) {
 
   // Verify that Ts*Tw = TsTw
   
-  vector<float> a {5, 2};
-  vector<float> b {3, 2};
-  float test = dot_vecvec (a, b);
+  
+  vector<vector<float>> a {{1,2,3},{4,5,6}};
+  vector<vector<float>> b {{9},{8},{7}};
 
-  printf("test = %f\n\n",test);
+  vector<vector<float>> test = dot_matmat (a,b);
 
-  // Check Ts visually
-  for (int i=0; i<3; i++) {
+  disp_mat(a);
+  disp_mat(b);
+  disp_mat(test);
+
+/*
+  for (int i=0; i<2; i++) {
     for (int j=0; j<3; j++) {
-      printf("%f\n",Ts[i][j]);
+      printf("%f,",a[i][j]);
     }
+    printf("\n");
   }
 
+  
+  for (int i=0; i<3; i++) {
+    for (int j=0; j<2; j++) {
+      printf("%f,",test[i][j]);
+    }
+    printf("\n");
+  }
+*/
 
 
   /*
