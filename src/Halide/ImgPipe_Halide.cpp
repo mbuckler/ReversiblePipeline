@@ -2,26 +2,53 @@
 // Update this later
 ///////////////////////////////
 
-
 #include "Halide.h"
 #include "ImgPipeConfig.h"
 #include "LoadCamModel.h"
 #include <stdio.h>
-
 #include "halide_image_io.h"
+
+// Function prototypes
+int run_pipeline(bool direction);
+
 
 int main(int argc, char **argv) {
   using namespace std;
 
-  vector<vector<float>> Ts;
+  // Run forward pipeline
+  run_pipeline(0);
 
-  Ts = get_Ts(cam_model_path);
+  // Run backward pipeline
+  //run_pipeline(1);
 
+  printf("Success!\n");
+  return 0;
+}
+
+int run_pipeline(bool direction) {
+
+  // Declare model parameters
+  vector<vector<float>> Ts, Tw, TsTw;
+  vector<vector<float>> ctrl_pts, weights, coefs;
+  vector<vector<float>> rev_tone;
+
+  // Load model parameters from file
+  Ts        = get_Ts       (cam_model_path);
+  Tw        = get_Tw       (cam_model_path, wb_index);
+  TsTw      = get_TsTw     (cam_model_path, wb_index);
+  ctrl_pts  = get_ctrl_pts (cam_model_path, num_ctrl_pts, direction);
+  weights   = get_weights  (cam_model_path, num_ctrl_pts, direction);
+  coefs     = get_coefs    (cam_model_path, num_ctrl_pts, direction);
+  rev_tone  = get_rev_tone (cam_model_path);
+
+  // Check Ts visually
   for (int i=0; i<3; i++) {
     for (int j=0; j<3; j++) {
       printf("%f\n",Ts[i][j]);
     }
   }
+
+
 
   /*
 
@@ -110,7 +137,4 @@ int main(int argc, char **argv) {
     // general solution is our next example.
   }
   */
-
-  printf("Success!\n");
-  return 0;
 }

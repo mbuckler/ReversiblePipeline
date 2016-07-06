@@ -13,19 +13,19 @@ using namespace std;
 vector<vector<float>> get_Ts(char* cam_model_path);
 
 // Get white balance transform
-float** get_Tw(char* cam_model_path, int wb_index);
+vector<vector<float>> get_Tw(char* cam_model_path, int wb_index);
 
 // Get combined transforms for checking
-float** get_TsTw(char* cam_model_path, int wb_index);
+vector<vector<float>> get_TsTw(char* cam_model_path, int wb_index);
 
 // Get control points
-float** get_ctrl_pnts(char* cam_model_path, bool pipeline);
+vector<vector<float>> get_ctrl_pts(char* cam_model_path, int num_cntrl_pts, bool direction);
 
 // Get weights
-float** get_weights(char* cam_model_path, bool pipeline);
+vector<vector<float>> get_weights(char* cam_model_path, int num_cntrl_pts, bool direction);
 
 // Get coeficients 
-float** get_coeficients(char* cam_model_path, bool pipeline);
+vector<vector<float>> get_coefs(char* cam_model_path, int num_cntrl_pts, bool direction);
 
 // Get reverse tone mapping
-float** get_rev_tone(char* cam_model_path);
+vector<vector<float>> get_rev_tone(char* cam_model_path);
