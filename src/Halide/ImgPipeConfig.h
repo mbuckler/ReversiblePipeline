@@ -18,7 +18,7 @@
 
 // Demosaiced raw input (to forward pipeline)
 char demosaiced_image[] = 
-"../../imgs/NikonD7000FL/DSC_0916.NEF.raw_1C.tiff.demosaiced.tif";
+"../../imgs/NikonD7000FL/DSC_0916.NEF.raw_1C.tiff.demosaiced.png";
 
 // Jpeg input (to backward pipeline)
 char jpg_image[] =
