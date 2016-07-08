@@ -107,7 +107,7 @@ int run_pipeline(bool direction) {
   // Weighted radial basis function for gamut mapping
   Func rbf_ctrl_pts("rbf_ctrl_pts");
   // Initialization:     red_val, green_val, blue_val
-  rbf_ctrl_pts(x,y,c) = {    0.0,       0.0,      0.0};
+  rbf_ctrl_pts(x,y,c) = {    cast<float>(0),      cast<float>( 0),      cast<float>(0)};
   // Index to iterate with
   RDom idx(0,num_ctrl_pts-1);
   // Loop code
@@ -127,6 +127,14 @@ int run_pipeline(bool direction) {
   // Update persistant loop variables
   rbf_ctrl_pts(x,y,c) = { new_red, new_green, new_blue};
 
+  Func rbf_reformat("rbf_reformat");
+  rbf_reformat(x,y,c) = select(c == 0, rbf_ctrl_pts(x,y,c)[0],
+                               c == 1, rbf_ctrl_pts(x,y,c)[1],
+                                       rbf_ctrl_pts(x,y,c)[2]);
+
+
+  Image<float> ctrl_pt_out = 
+    rbf_reformat.realize(10, 10, input.channels());
 
 
 
