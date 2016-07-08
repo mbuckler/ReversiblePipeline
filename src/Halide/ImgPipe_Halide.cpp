@@ -97,58 +97,66 @@ int run_pipeline(bool direction) {
   Func transform("transform");
   transform(x,y,c) = max( select(
     // Perform matrix multiplication, set min of 0
-    c == 0, input_16(x,y,0)*TsTw_tran[0][0] + input_16(x,y,1)*TsTw_tran[1][0] + input_16(x,y,2)*TsTw_tran[2][0],
-    c == 1, input_16(x,y,0)*TsTw_tran[0][1] + input_16(x,y,1)*TsTw_tran[1][1] + input_16(x,y,2)*TsTw_tran[2][1],
-            input_16(x,y,0)*TsTw_tran[0][2] + input_16(x,y,1)*TsTw_tran[1][2] + input_16(x,y,2)*TsTw_tran[2][2])
+    c == 0, input_16(x,y,0)*TsTw_tran[0][0]
+          + input_16(x,y,1)*TsTw_tran[1][0]
+          + input_16(x,y,2)*TsTw_tran[2][0],
+    c == 1, input_16(x,y,0)*TsTw_tran[0][1]
+          + input_16(x,y,1)*TsTw_tran[1][1]
+          + input_16(x,y,2)*TsTw_tran[2][1],
+            input_16(x,y,0)*TsTw_tran[0][2]
+          + input_16(x,y,1)*TsTw_tran[1][2]
+          + input_16(x,y,2)*TsTw_tran[2][2])
                           , 0);
-
 
 
   // Weighted radial basis function for gamut mapping
   Func rbf_ctrl_pts("rbf_ctrl_pts");
-  // Initialization:     red_val, green_val, blue_val
-  rbf_ctrl_pts(x,y,c) = {    cast<float>(0),      cast<float>( 0),      cast<float>(0)};
+  // Initialization with all zero
+  rbf_ctrl_pts(x,y,c) = cast<float>(0);
   // Index to iterate with
-  RDom idx(0,num_ctrl_pts-1);
+  RDom idx(0,num_ctrl_pts);
   // Loop code
   // Subtract the vectors 
-  Expr red_sub   = transform(x,y,0) - ctrl_pts_h(0,idx);
-  Expr green_sub = transform(x,y,1) - ctrl_pts_h(1,idx);
-  Expr blue_sub  = transform(x,y,2) - ctrl_pts_h(2,idx);
+  Expr red_sub   = transform(x,y,0) - 256*ctrl_pts_h(0,idx);
+  Expr green_sub = transform(x,y,1) - 256*ctrl_pts_h(1,idx);
+  Expr blue_sub  = transform(x,y,2) - 256*ctrl_pts_h(2,idx);
   // Take the L2 norm to get the distance
   Expr dist      = sqrt( red_sub*red_sub + green_sub*green_sub + blue_sub*blue_sub );
-  // Extract the old values
-  Expr old_red   = rbf_ctrl_pts(x,y,c)[0];
-  Expr old_green = rbf_ctrl_pts(x,y,c)[1];
-  Expr old_blue  = rbf_ctrl_pts(x,y,c)[2];
-  Expr new_red   = old_red +   (weights_h(0,idx) * dist);
-  Expr new_green = old_green + (weights_h(1,idx) * dist);
-  Expr new_blue  = old_blue +  (weights_h(2,idx) * dist);
   // Update persistant loop variables
-  rbf_ctrl_pts(x,y,c) = { new_red, new_green, new_blue};
+  rbf_ctrl_pts(x,y,c) = select( c == 0, rbf_ctrl_pts(x,y,c) + (weights_h(0,idx) * dist),
+                                c == 1, rbf_ctrl_pts(x,y,c) + (weights_h(1,idx) * dist),
+                                        rbf_ctrl_pts(x,y,c) + (weights_h(2,idx) * dist));
 
-  Func rbf_reformat("rbf_reformat");
-  rbf_reformat(x,y,c) = select(c == 0, rbf_ctrl_pts(x,y,c)[0],
-                               c == 1, rbf_ctrl_pts(x,y,c)[1],
-                                       rbf_ctrl_pts(x,y,c)[2]);
-
-
-  Image<float> ctrl_pt_out = 
-    rbf_reformat.realize(10, 10, input.channels());
+  // Works!
+  //Image<float> ctrl_pt_out = 
+  //  rbf_ctrl_pts.realize(input.width(), input.height(), input.channels());
 
 
+  // Add on the biases for the RBF
+  Func rbf_biases("rbf_biases");
+  rbf_biases(x,y,c) = max( select( 
+    c == 0, rbf_ctrl_pts(x,y,0) + coefs[0][0] + coefs[1][0]*transform(x,y,0) +
+      coefs[2][0]*transform(x,y,1) + coefs[3][0]*transform(x,y,2),
+    c == 1, rbf_ctrl_pts(x,y,1) + coefs[0][1] + coefs[1][1]*transform(x,y,0) +
+      coefs[2][1]*transform(x,y,1) + coefs[3][1]*transform(x,y,2),
+            rbf_ctrl_pts(x,y,2) + coefs[0][2] + coefs[1][2]*transform(x,y,0) +
+      coefs[2][2]*transform(x,y,1) + coefs[3][2]*transform(x,y,2))
+                          , 0);
 
+
+  // Cast the output to 8 bit
   Func output_8("output_8");
-  output_8(x,y,c) = cast<uint8_t>(transform(x,y,c));
+  output_8(x,y,c) = cast<uint8_t>(rbf_biases(x,y,c));
+  output_8.trace_stores();
 
-  Func output_f("output_f");
-  output_f(x,y,c) = cast<float>(transform(x,y,c));
-
-  // Realize the function(s)
+  // Realize the functions
   Image<uint8_t> output =
       output_8.realize(input.width(), input.height(), input.channels());
-  Image<float> transformed = 
-      output_f.realize(input.width(), input.height(), input.channels());
+
+  // Save the output for inspection
+  save_image(output, "output.png");
+
+
 
 /*
   // Further processing
@@ -197,9 +205,6 @@ int run_pipeline(bool direction) {
     }
   }
 */
-
-  // Save the output for inspection
-  save_image(output, "output.png");
 
   return 0;
 }
