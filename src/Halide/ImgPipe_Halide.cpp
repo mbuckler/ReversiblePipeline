@@ -67,7 +67,8 @@ int run_pipeline(bool direction) {
   Image<float> ctrl_pts_h(width,length);
   for (int y=0; y<length; y++) {
     for (int x=0; x<width; x++) {
-      ctrl_pts_h(x,y) = ctrl_pts[y][x];
+      // Scale the control points to fit 8 bits
+      ctrl_pts_h(x,y) = 256 * ctrl_pts[y][x];
     }
   }
   width  = weights[0].size();
@@ -78,19 +79,38 @@ int run_pipeline(bool direction) {
       weights_h(x,y) = weights[y][x];
     }
   }
-  
 
-  //Image<float> ctrl_pts_h( Buffer(Float(32), N, M, 0, 0, &ctrl_pts) );
+  // Scale the bias coeficients to fit 8 bits
+  //for (int i=0;i<4;i++) {
+    for (int j=0;j<3;j++) {
+      coefs[0][j] = 256 * coefs[0][j];
+    }
+  //}
 
 
+
+  int patchsize = 1;
+  int xstart    = 551;
+  int ystart    = 2751;
+ 
   // Load input image 
   Image<uint8_t> input = load_image(demosaiced_image);
+//  input.set_min(xstart, ystart);
+
+ // Define the patch to process
+ //  Image<uint8_t> patch(patchsize, patchsize, 3);
+ // patch.set_min(xstart, ystart, 0);
+  // Copy the subsection into the patch
+  
+  
+
+
 
   // Declare image handle variables
   Var x, y, c;
 
   Func input_16("input_16");
-  input_16(x,y,c)  = cast<uint16_t>(input(x,y,c));
+  input_16(x,y,c)  = cast<float>(input(x,y,c));
   
 
   // Color map and white balance transform
@@ -107,7 +127,7 @@ int run_pipeline(bool direction) {
           + input_16(x,y,1)*TsTw_tran[1][2]
           + input_16(x,y,2)*TsTw_tran[2][2])
                           , 0);
-
+  transform.trace_stores();
 
   // Weighted radial basis function for gamut mapping
   Func rbf_ctrl_pts("rbf_ctrl_pts");
@@ -117,15 +137,17 @@ int run_pipeline(bool direction) {
   RDom idx(0,num_ctrl_pts);
   // Loop code
   // Subtract the vectors 
-  Expr red_sub   = transform(x,y,0) - 256*ctrl_pts_h(0,idx);
-  Expr green_sub = transform(x,y,1) - 256*ctrl_pts_h(1,idx);
-  Expr blue_sub  = transform(x,y,2) - 256*ctrl_pts_h(2,idx);
+  Expr red_sub   = transform(x,y,0) - ctrl_pts_h(0,idx);
+  Expr green_sub = transform(x,y,1) - ctrl_pts_h(1,idx);
+  Expr blue_sub  = transform(x,y,2) - ctrl_pts_h(2,idx);
   // Take the L2 norm to get the distance
   Expr dist      = sqrt( red_sub*red_sub + green_sub*green_sub + blue_sub*blue_sub );
   // Update persistant loop variables
   rbf_ctrl_pts(x,y,c) = select( c == 0, rbf_ctrl_pts(x,y,c) + (weights_h(0,idx) * dist),
                                 c == 1, rbf_ctrl_pts(x,y,c) + (weights_h(1,idx) * dist),
                                         rbf_ctrl_pts(x,y,c) + (weights_h(2,idx) * dist));
+  //rbf_ctrl_pts.trace_stores();
+
 
   // Works!
   //Image<float> ctrl_pt_out = 
@@ -142,16 +164,21 @@ int run_pipeline(bool direction) {
             rbf_ctrl_pts(x,y,2) + coefs[0][2] + coefs[1][2]*transform(x,y,0) +
       coefs[2][2]*transform(x,y,1) + coefs[3][2]*transform(x,y,2))
                           , 0);
-
+  rbf_biases.trace_stores();
 
   // Cast the output to 8 bit
   Func output_8("output_8");
   output_8(x,y,c) = cast<uint8_t>(rbf_biases(x,y,c));
   output_8.trace_stores();
 
+
+
+
+
   // Realize the functions
-  Image<uint8_t> output =
-      output_8.realize(input.width(), input.height(), input.channels());
+  Image<uint8_t> output(patchsize,patchsize,3);
+  output.set_min(xstart,ystart);
+  output_8.realize(output);
 
   // Save the output for inspection
   save_image(output, "output.png");
