@@ -11,21 +11,23 @@
 #include "halide_image_io.h"
 
 // Function prototypes
-int   run_pipeline(bool direction, int patchsize, int xstart, int ystart);
+int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystart);
 
 
 int main(int argc, char **argv) {
   using namespace std;
+
+  bool full = false;
 
   int patchsize = 1;
   int xstart    = 551;
   int ystart    = 2751; 
 
   // Run forward pipeline
-  run_pipeline(0, patchsize, xstart, ystart);
+  run_pipeline(true, full, patchsize, xstart, ystart);
 
   // Run backward pipeline
-  //run_pipeline(1, patchsize, xstart, ystart);
+  //run_pipeline(false, full, patchsize, xstart, ystart);
 
   printf("Success!\n");
   return 0;
@@ -33,7 +35,7 @@ int main(int argc, char **argv) {
 
 
 // Reversible pipeline function
-int run_pipeline(bool direction, int patchsize, int xstart, int ystart) {
+int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystart) {
 
   using namespace std;  
 
@@ -175,13 +177,20 @@ int run_pipeline(bool direction, int patchsize, int xstart, int ystart) {
 
 
   // Realize the functions
-  Image<uint8_t> output(patchsize,patchsize,3);
-  output.set_min(xstart,ystart);
-  output_8.realize(output);
-
-
-  // Save the output for inspection
-  save_image(output, "output.png");
+  if (full == true) {
+    // Put full image through pipeline
+    Image<uint8_t> output =
+      output_8.realize(input.width(), input.height(), input.channels());
+    // Save the output for inspection
+    save_image(output, "output.png");
+  } else {
+    // Only compute a patch
+    Image<uint8_t> output(patchsize,patchsize,3);
+    output.set_min(xstart,ystart);
+    output_8.realize(output);
+    // Save the output for inspection
+    save_image(output, "output.png");
+  }
 
   return 0;
 }
