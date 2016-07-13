@@ -77,9 +77,29 @@ float dot_vecvec (vector<float> a, vector<float> b) {
   return result;
 }
 
+
 // Three by three matrix inversion
 vector<vector<float>> inv_3x3mat (vector<vector<float>> inmat) {
+  vector<vector<float>> result;
+  result = inmat;
 
+  float det = inmat[0][0] * (inmat[1][1] * inmat[2][2] - inmat[2][1] * inmat[1][2]) -
+              inmat[0][1] * (inmat[1][0] * inmat[2][2] - inmat[1][2] * inmat[2][0]) +
+              inmat[0][2] * (inmat[1][0] * inmat[2][1] - inmat[1][1] * inmat[2][0]);
+
+  float invdet = 1/det;
+
+  result[0][0] = (inmat[1][1] * inmat[2][2] - inmat[2][1] * inmat[1][2]) * invdet;
+  result[0][1] = (inmat[0][2] * inmat[2][1] - inmat[0][1] * inmat[2][2]) * invdet;
+  result[0][2] = (inmat[0][1] * inmat[1][2] - inmat[0][2] * inmat[1][1]) * invdet;
+  result[1][0] = (inmat[1][2] * inmat[2][0] - inmat[1][0] * inmat[2][2]) * invdet;
+  result[1][1] = (inmat[0][0] * inmat[2][2] - inmat[0][2] * inmat[2][0]) * invdet;
+  result[1][2] = (inmat[1][0] * inmat[0][2] - inmat[0][0] * inmat[1][2]) * invdet;
+  result[2][0] = (inmat[1][0] * inmat[2][1] - inmat[2][0] * inmat[1][1]) * invdet;
+  result[2][1] = (inmat[2][0] * inmat[0][1] - inmat[0][0] * inmat[2][1]) * invdet;
+  result[2][2] = (inmat[0][0] * inmat[1][1] - inmat[1][0] * inmat[0][1]) * invdet;
+
+  return result;
 }
 
 // Display matrix
