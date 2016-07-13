@@ -22,7 +22,7 @@ char demosaiced_image[] =
 
 // Jpeg input (to backward pipeline)
 char jpg_image[] =
-"../../imgs/NikonD7000FL/DSC_0916.JPG";
+"../../imgs/NikonD7000FL/DSC_0916.JPG.png";
 
 ///////////////////////////////////////////////////////////////
 // Camera Model Parameters
