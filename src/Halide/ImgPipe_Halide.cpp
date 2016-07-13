@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "halide_image_io.h"
+#include "clock.h"
 
 // Function prototypes
 int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystart);
@@ -19,9 +20,9 @@ int main(int argc, char **argv) {
 
   bool full = false;
 
-  int patchsize = 3;
-  int xstart    = 1501;//551;
-  int ystart    = 2751; 
+  int patchsize = 96;
+  int xstart    = 0;
+  int ystart    = 0; 
 
   // Run forward pipeline
   run_pipeline(true, full, patchsize, xstart, ystart);
@@ -209,8 +210,6 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
     // it reverses the reverse tone mapping function.
     tonemap(x,y,c) = cast<uint8_t>(argmin( abs( rev_tone_h(c,idx2) - rbf_biases(x,y,c) ) )[0]);
 
-  tonemap.trace_stores();
-
 
   // BACKWARD FUNCS /////////////////////////////////////////////////////////////////////
 
@@ -266,32 +265,72 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
             + rev_rbf_biases(x,y,2)*TsTw_tran[2][2])
                                                         , 0) );
 
-
-
-  ///////////////////////////////////////////////////////////////////////////////////////
-  // Default CPU Schedule
-
+  // Common scheduling
+  transform.reorder(c,x,y).bound(c,0,3).unroll(c);
+  rbf_ctrl_pts.reorder(c,x,y).bound(c,0,3).unroll(c);
+  rbf_biases.reorder(c,x,y).bound(c,0,3).unroll(c);
+  tonemap.reorder(c,x,y).bound(c,0,3).unroll(c);
 
   transform.compute_root();
   rbf_ctrl_pts.compute_root();
   rbf_biases.compute_root();
 
-  tonemap.trace_stores();
+  rev_transform.reorder(c,x,y).bound(c,0,3).unroll(c);
+  rev_rbf_ctrl_pts.reorder(c,x,y).bound(c,0,3).unroll(c);
+  rev_rbf_biases.reorder(c,x,y).bound(c,0,3).unroll(c);
+  rev_tonemap.reorder(c,x,y).bound(c,0,3).unroll(c);
 
-  scale.compute_root();
   rev_tonemap.compute_root();
   rev_rbf_ctrl_pts.compute_root();
   rev_rbf_biases.compute_root();
 
-  //scale.trace_stores();
-  //rev_tonemap.trace_stores();
-  //rev_rbf_ctrl_pts.trace_stores();
-  //rev_rbf_biases.trace_stores();
-  //rev_transform.trace_stores();
- 
+
+  ///////////////////////////////////////////////////////////////////////////////////////
+  // CPU Schedule
+
+  Var yo, yi;
+
+  transform.vectorize(x, 8);
+  rbf_ctrl_pts.vectorize(x, 8);
+  rbf_biases.vectorize(x, 8);
+  tonemap.vectorize(x, 8);
+
+  transform.split(y,yo,yi,8).parallel(yo);
+  rbf_ctrl_pts.split(y,yo,yi,8).parallel(yo);
+  rbf_biases.split(y,yo,yi,8).parallel(yo);
+  tonemap.split(y,yo,yi,8).parallel(yo);
+
+  transform.compile_jit();
+  rbf_ctrl_pts.compile_jit();
+  rbf_biases.compile_jit();
+  tonemap.compile_jit();
+
+/*
+  ///////////////////////////////////////////////////////////////////////////////////////
+  // GPU Schedule
+
+  transform.gpu_tile(x, y, 16, 16);
+  rbf_ctrl_pts.gpu_tile(x, y, 16, 16);
+  rbf_biases.gpu_tile(x, y, 16, 16);
+  tonemap.gpu_tile(x, y, 16, 16);
+
+  Target target = get_host_target();
+
+  target.set_feature(Target::CUDA);
+
+  transform.compile_jit(target);
+  rbf_ctrl_pts.compile_jit(target);
+  rbf_biases.compile_jit(target);
+  tonemap.compile_jit(target);
+*/
+
+  // Realization
+
+  double t1, t2;
+
+  t1 = current_time();
 
   Image<uint8_t> output;
-
   // Resize the input if not processing full image 
   if (full == true) {
     // patch as the full image
@@ -320,6 +359,9 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
     }
   }
 
+  t2 = current_time();
+
+  printf("Processing time = %1.4f milliseconds\n",t2-t1);
 
   ////////////////////////////////////////////////////////////////////////
   // Save the output
