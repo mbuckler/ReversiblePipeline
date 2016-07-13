@@ -127,7 +127,7 @@ vector<vector<float>> get_ctrl_pts(char* cam_model_path, int num_cntrl_pts, bool
   int line_idx = 0;
 
   // Open file for reading
-  if (direction==0) {
+  if (direction==1) {
     // Forward pipeline
     directionfile = string("raw2jpg_ctrlPoints.txt");
   } else {
@@ -168,7 +168,7 @@ vector<vector<float>> get_weights(char* cam_model_path, int num_cntrl_pts, bool 
   int line_idx = 0;
 
   // Open file for reading
-  if (direction==0) {
+  if (direction==1) {
     // Forward pipeline
     directionfile = string("raw2jpg_coefs.txt");
   } else {
@@ -209,7 +209,7 @@ vector<vector<float>> get_coefs(char* cam_model_path, int num_cntrl_pts, bool di
   int line_idx = 0;
 
   // Open file for reading
-  if (direction==0) {
+  if (direction==1) {
     // Forward pipeline
     directionfile = string("raw2jpg_coefs.txt");
   } else {
