@@ -19,8 +19,8 @@ int main(int argc, char **argv) {
 
   bool full = false;
 
-  int patchsize = 1;
-  int xstart    = 551;
+  int patchsize = 3;
+  int xstart    = 1501;//551;
   int ystart    = 2751; 
 
   // Run forward pipeline
@@ -48,6 +48,10 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
   vector<vector<float>> rev_tone;
 
   // Load model parameters from file
+  // NOTE: Ts, Tw, and TsTw read only forward data
+  // ctrl_pts, weights, and coefs are either forward or backward
+  // tone mapping is always backward
+  // This is due to the the camera model format
   Ts        = get_Ts       (cam_model_path);
   Tw        = get_Tw       (cam_model_path, wb_index);
   TsTw      = get_TsTw     (cam_model_path, wb_index);
@@ -55,6 +59,8 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
   weights   = get_weights  (cam_model_path, num_ctrl_pts, direction);
   coefs     = get_coefs    (cam_model_path, num_ctrl_pts, direction);
   rev_tone  = get_rev_tone (cam_model_path);
+
+  //disp_mat(ctrl_pts);
 
 /*
   // Verify that Ts*Tw = TsTw
@@ -67,6 +73,12 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
  
   // Take the transpose of the color map and white balance transform for later use
   vector<vector<float>> TsTw_tran = transpose_mat (TsTw);
+
+  // If we are performing a backward implementation of the pipeline, 
+  // take the inverse of TsTw_tran
+  if (direction == 0) { 
+    TsTw_tran = inv_3x3mat(TsTw_tran);
+  }
 
   using namespace Halide;
   using namespace Halide::Tools;
@@ -106,7 +118,14 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
   Var x, y, c;
 
   // Load input image 
-  Image<uint8_t> input = load_image(demosaiced_image);
+  Image<uint8_t> input;
+  if (direction == 1) {
+    // If using forward pipeline
+    input = load_image(demosaiced_image);
+  } else {
+    // If using backward pipeline
+    input = load_image(jpg_image);
+  }
 
   // Initialize patch
   Image<uint8_t> in_patch;
@@ -133,10 +152,12 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
   // Cast input to float and scale according to its 8 bit input format
   Func scale("scale");
     scale(x,y,c) = cast<float>(in_patch(x,y,c))/256;
-  
+
+  // FORWARD FUNCS //////////////////////////////////////////////////////////////////////
+ 
   // Color map and white balance transform
   Func transform("transform");
-    transform(x,y,c) = max( select(
+    transform(x,y,c) = select(
       // Perform matrix multiplication, set min of 0
       c == 0, scale(x,y,0)*TsTw_tran[0][0]
             + scale(x,y,1)*TsTw_tran[1][0]
@@ -146,8 +167,9 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
             + scale(x,y,2)*TsTw_tran[2][1],
               scale(x,y,0)*TsTw_tran[0][2]
             + scale(x,y,1)*TsTw_tran[1][2]
-            + scale(x,y,2)*TsTw_tran[2][2])
-                            , 0);
+            + scale(x,y,2)*TsTw_tran[2][2]);
+                            
+
 
   // Weighted radial basis function for gamut mapping
   Func rbf_ctrl_pts("rbf_ctrl_pts");
@@ -183,47 +205,127 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
     RDom idx2(0,256);
     // Theres a lot in this one line! Functionality wise it finds the entry in 
     // the reverse tone mapping function which is closest to the value found by
-    // gamut mapping. This entry is then scaled by 256 to ensure that the output
-    // is fractional, just like the rest of the pipeline.
-    tonemap(x,y,c) = argmin( abs( rev_tone_h(c,idx2) - rbf_biases(x,y,c) ) )[0]  / 256.0f;
+    // gamut mapping. The output is then cast to uint8 for output. Effectively 
+    // it reverses the reverse tone mapping function.
+    tonemap(x,y,c) = cast<uint8_t>(argmin( abs( rev_tone_h(c,idx2) - rbf_biases(x,y,c) ) )[0]);
 
-  // Rescale the output and cast the output to 8 bit for image writing
-  Func output_8("output_8");
-    output_8(x,y,c) = cast<uint8_t>(tonemap(x,y,c)*256);
- 
-  output_8.trace_stores();
+  tonemap.trace_stores();
 
-  ////////////////////////////////////////////////////////////////////////
-  // CPU Schedule
+
+  // BACKWARD FUNCS /////////////////////////////////////////////////////////////////////
+
+  // Backward tone mapping
+  Func rev_tonemap("rev_tonemap");
+    Expr rev_tone_idx = cast<uint8_t>(scale(x,y,c) * 256.0f);
+    rev_tonemap(x,y,c) = rev_tone_h(c,rev_tone_idx) ;
+
+  // Weighted radial basis function for gamut mapping
+  Func rev_rbf_ctrl_pts("rev_rbf_ctrl_pts");
+    // Initialization with all zero
+    rev_rbf_ctrl_pts(x,y,c) = cast<float>(0);
+    // Index to iterate with
+    RDom revidx(0,num_ctrl_pts);
+    // Loop code
+    // Subtract the vectors 
+    Expr revred_sub   = rev_tonemap(x,y,0) - ctrl_pts_h(0,revidx);
+    Expr revgreen_sub = rev_tonemap(x,y,1) - ctrl_pts_h(1,revidx);
+    Expr revblue_sub  = rev_tonemap(x,y,2) - ctrl_pts_h(2,revidx);
+    // Take the L2 norm to get the distance
+    Expr revdist      = sqrt( revred_sub*revred_sub + 
+                              revgreen_sub*revgreen_sub + 
+                              revblue_sub*revblue_sub );
+    // Update persistant loop variables
+    rev_rbf_ctrl_pts(x,y,c) = select( c == 0, rev_rbf_ctrl_pts(x,y,c) + (weights_h(0,revidx) * revdist),
+                                      c == 1, rev_rbf_ctrl_pts(x,y,c) + (weights_h(1,revidx) * revdist),
+                                              rev_rbf_ctrl_pts(x,y,c) + (weights_h(2,revidx) * revdist));
+
+  // Add on the biases for the RBF
+  Func rev_rbf_biases("rev_rbf_biases");
+    rev_rbf_biases(x,y,c) = max( select( 
+      c == 0, rev_rbf_ctrl_pts(x,y,0) + coefs[0][0] + coefs[1][0]*rev_tonemap(x,y,0) +
+        coefs[2][0]*rev_tonemap(x,y,1) + coefs[3][0]*rev_tonemap(x,y,2),
+      c == 1, rev_rbf_ctrl_pts(x,y,1) + coefs[0][1] + coefs[1][1]*rev_tonemap(x,y,0) +
+        coefs[2][1]*rev_tonemap(x,y,1) + coefs[3][1]*rev_tonemap(x,y,2),
+              rev_rbf_ctrl_pts(x,y,2) + coefs[0][2] + coefs[1][2]*rev_tonemap(x,y,0) +
+        coefs[2][2]*rev_tonemap(x,y,1) + coefs[3][2]*rev_tonemap(x,y,2))
+                            , 0);
+
+
+  // Reverse color map and white balance transform
+  Func rev_transform("rev_transform");
+    rev_transform(x,y,c) = cast<uint8_t>( 256.0f * max( select(
+      // Perform matrix multiplication, set min of 0
+      c == 0, rev_rbf_biases(x,y,0)*TsTw_tran[0][0]
+            + rev_rbf_biases(x,y,1)*TsTw_tran[1][0]
+            + rev_rbf_biases(x,y,2)*TsTw_tran[2][0],
+      c == 1, rev_rbf_biases(x,y,0)*TsTw_tran[0][1]
+            + rev_rbf_biases(x,y,1)*TsTw_tran[1][1]
+            + rev_rbf_biases(x,y,2)*TsTw_tran[2][1],
+              rev_rbf_biases(x,y,0)*TsTw_tran[0][2]
+            + rev_rbf_biases(x,y,1)*TsTw_tran[1][2]
+            + rev_rbf_biases(x,y,2)*TsTw_tran[2][2])
+                                                        , 0) );
+
+
+
+  ///////////////////////////////////////////////////////////////////////////////////////
+  // Default CPU Schedule
+
 
   transform.compute_root();
-
   rbf_ctrl_pts.compute_root();
-
   rbf_biases.compute_root();
+
+  tonemap.trace_stores();
+
+  scale.compute_root();
+  rev_tonemap.compute_root();
+  rev_rbf_ctrl_pts.compute_root();
+  rev_rbf_biases.compute_root();
+
+  //scale.trace_stores();
+  //rev_tonemap.trace_stores();
+  //rev_rbf_ctrl_pts.trace_stores();
+  //rev_rbf_biases.trace_stores();
+  //rev_transform.trace_stores();
+ 
 
   Image<uint8_t> output;
 
   // Resize the input if not processing full image 
   if (full == true) {
     // patch as the full image
-    output = output_8.realize(in_patch.width(), 
-                              in_patch.height(), 
-                              in_patch.channels());
+    if (direction == 1) {
+      // forward pipeline
+      output = tonemap.realize(in_patch.width(), 
+                               in_patch.height(), 
+                               in_patch.channels());
+    } else {
+      // backward pipeline
+      output = rev_transform.realize(in_patch.width(), 
+                                     in_patch.height(), 
+                                     in_patch.channels());
+    }
   } else {
     // Copy the subset of the image into the patch
     Image<uint8_t> temp(patchsize,patchsize,3);
     temp.set_min(xstart,ystart);
     output = temp;
-    output_8.realize(output);
+    if (direction == 1) {
+      // forward pipeline
+      tonemap.realize(output);
+    } else {
+      // backward pipeline
+      rev_transform.realize(output);
+    }
   }
 
 
+  ////////////////////////////////////////////////////////////////////////
+  // Save the output
 
-  // Save the output for inspection
   save_image(output, "output.png");
 
-  ////////////////////////////////////////////////////////////////////////
 
   return 0;
 }
