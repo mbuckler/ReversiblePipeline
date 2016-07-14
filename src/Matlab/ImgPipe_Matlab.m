@@ -110,6 +110,18 @@ function ImgPipe_Matlab
     write_results(backward_results, patchnum, ...
         strcat(results_dir,'backward_results.txt'));
     
+    disp(strcat('Avg % color channel error for forward:  ', ...
+        num2str(mean(mean(abs(forward_results(:,3,:)))))));
+    disp(strcat('Avg % color channel error for backward: ', ...
+        num2str(mean(mean(abs(backward_results(:,3,:)))))));
+
+    disp(strcat('Max % color channel error for forward:  ', ...
+        num2str(max(max(abs(forward_results(:,3,:)))))));
+    disp(strcat('Max % color channel error for backward: ', ...
+        num2str(max(max(abs(backward_results(:,3,:)))))));
+
+    disp('See results folder for error per patch and per color channel');
+    
 end
 
 
@@ -499,7 +511,7 @@ function [refavg, resultavg, error] = patch_compare(resultpatch, referencepatch)
         resultavg(color) = mean(mean(resultpatch(:,:,color)));
         % Compute error
         diff             = resultavg(color)-refavg(color);
-        error(color)     = (diff/refavg(color))*100;
+        error(color)     = (diff/256.0)*100;
     end
 
 end
