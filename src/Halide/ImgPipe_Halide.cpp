@@ -265,21 +265,24 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
             + rev_rbf_biases(x,y,2)*TsTw_tran[2][2])
                                                         , 0) );
 
-  // Common scheduling
+  // Loop over color (c) first, unroll this loop
   transform.reorder(c,x,y).bound(c,0,3).unroll(c);
   rbf_ctrl_pts.reorder(c,x,y).bound(c,0,3).unroll(c);
   rbf_biases.reorder(c,x,y).bound(c,0,3).unroll(c);
   tonemap.reorder(c,x,y).bound(c,0,3).unroll(c);
 
+  // Compute these stages ahead of time and store their values
   transform.compute_root();
   rbf_ctrl_pts.compute_root();
   rbf_biases.compute_root();
 
+  // Loop over color (c) first, unroll this loop
   rev_transform.reorder(c,x,y).bound(c,0,3).unroll(c);
   rev_rbf_ctrl_pts.reorder(c,x,y).bound(c,0,3).unroll(c);
   rev_rbf_biases.reorder(c,x,y).bound(c,0,3).unroll(c);
   rev_tonemap.reorder(c,x,y).bound(c,0,3).unroll(c);
 
+  // Compute these stages ahead of time and store their values
   rev_tonemap.compute_root();
   rev_rbf_ctrl_pts.compute_root();
   rev_rbf_biases.compute_root();
@@ -290,16 +293,19 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
 
   Var yo, yi;
 
+  // Vectorize 8 ways
   transform.vectorize(x, 8);
   rbf_ctrl_pts.vectorize(x, 8);
   rbf_biases.vectorize(x, 8);
   tonemap.vectorize(x, 8);
 
+  // Split and parallelize
   transform.split(y,yo,yi,8).parallel(yo);
   rbf_ctrl_pts.split(y,yo,yi,8).parallel(yo);
   rbf_biases.split(y,yo,yi,8).parallel(yo);
   tonemap.split(y,yo,yi,8).parallel(yo);
 
+  // Use the just in time compiler
   transform.compile_jit();
   rbf_ctrl_pts.compile_jit();
   rbf_biases.compile_jit();
@@ -309,15 +315,19 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
   ///////////////////////////////////////////////////////////////////////////////////////
   // GPU Schedule
 
+  // Perform computation in 16x16 tiles within the GPU
   transform.gpu_tile(x, y, 16, 16);
   rbf_ctrl_pts.gpu_tile(x, y, 16, 16);
   rbf_biases.gpu_tile(x, y, 16, 16);
   tonemap.gpu_tile(x, y, 16, 16);
 
+  // Select the local GPU
   Target target = get_host_target();
 
+  // Ensure that we will use CUDA instead of OpenCL
   target.set_feature(Target::CUDA);
 
+  // Use the just in time compiler
   transform.compile_jit(target);
   rbf_ctrl_pts.compile_jit(target);
   rbf_biases.compile_jit(target);
