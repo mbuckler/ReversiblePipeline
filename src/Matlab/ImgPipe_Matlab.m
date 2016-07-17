@@ -204,14 +204,8 @@ function [demosaiced, transformed, gamutmapped, tonemapped, ref_image] = ...
     %==============================================================
     % Forward pipeline function
 
-    % Scale input image from 14 bit values to 16 bit values
-    % (multiply by 2^2)
-    % NOTE: This currently needs to be changed manually, and is 
-    % therefore not yet parameterized
-    in_scaled        = in_image * 4;
-
     % Convert to uint16 representation for demosaicing
-    in_image_unit16  = im2uint16(in_scaled);
+    in_image_unit16  = im2uint16(in_image);
     
     % Demosaic image
     demosaiced       = im2uint8(demosaic(in_image_unit16,'rggb'));%gbrg %rggb 
@@ -336,10 +330,7 @@ function [revtonemapped, revgamutmapped, revtransformed, remosaiced, ref_image_c
     in_image         = imread(strcat(image_dir,in_image_name));
     ref_image        = imread(strcat(image_dir,ref_image_name));
     
-    % Scale reference input, as the raw input may not fill the 16 bits
-    % The D7000 uses 14 bits, so multiply input by 4
-    ref_image        = ref_image * 4;
-    
+    % Convert the input image to double represenation
     ref_image        = im2double(ref_image);
     
     %==============================================================
