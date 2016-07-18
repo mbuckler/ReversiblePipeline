@@ -1,6 +1,21 @@
-//////////////////////////
-// Update this later
-///////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+// Image Processing Pipeline
+//
+// This is a Halide implementation of a pre-learned image 
+// processing model. A description of the model can be found in
+// "A New In-Camera Imaging Model for Color Computer Vision 
+// and its Application" by Seon Joo Kim, Hai Ting Lin, 
+// Michael Brown, et al. Code for learning a new model can 
+// be found at the original project page. This particular 
+// implementation was written by Mark Buckler.
+//
+// Original Project Page:
+// http://www.comp.nus.edu.sg/~brown/radiometric_calibration/
+//
+// Model Format Readme:
+// http://www.comp.nus.edu.sg/~brown/radiometric_calibration/datasets/Model_param/readme.pdf
+//
+/////////////////////////////////////////////////////////////////////////////////////////
 
 #include "Halide.h"
 #include "ImgPipeConfig.h"
@@ -12,23 +27,23 @@
 #include "clock.h"
 
 // Function prototypes
-int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystart);
+int run_pipeline(bool direction);
 
 
 int main(int argc, char **argv) {
   using namespace std;
 
-  bool full = true;
-
-  int patchsize = 1;
-  int xstart    = 551;
-  int ystart    = 2751; 
+  printf("Starting script. Note that processing may take several minutes for large images\n");
 
   // Run forward pipeline
-  run_pipeline(true, full, patchsize, xstart, ystart);
+  printf("Running forward pipeline...\n");
+  run_pipeline(true);
+  printf("Forward pipeline complete\n");
 
   // Run backward pipeline
-  //run_pipeline(false, full, patchsize, xstart, ystart);
+  printf("Running backward pipeline...\n");
+  run_pipeline(false);
+  printf("Backward pipeline complete\n");
 
   printf("Success!\n");
   return 0;
@@ -36,7 +51,7 @@ int main(int argc, char **argv) {
 
 
 // Reversible pipeline function
-int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystart) {
+int run_pipeline(bool direction) {
 
   ///////////////////////////////////////////////////////////////////////////////////////
   // Import and format model data
@@ -61,17 +76,6 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
   coefs     = get_coefs    (cam_model_path, num_ctrl_pts, direction);
   rev_tone  = get_rev_tone (cam_model_path);
 
-  //disp_mat(ctrl_pts);
-
-/*
-  // Verify that Ts*Tw = TsTw
-  vector<vector<float>> TsTw_test = dot_matmat(Ts,Tw);
-  disp_mat(TsTw);
-  disp_mat(TsTw_test);
-  if (TsTw_test != TsTw)
-    throw runtime_error("Error: TsTw != Ts*Tw. Possible model import error or improper model format");
-*/
- 
   // Take the transpose of the color map and white balance transform for later use
   vector<vector<float>> TsTw_tran = transpose_mat (TsTw);
 
@@ -169,8 +173,6 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
               scale(x,y,0)*TsTw_tran[0][2]
             + scale(x,y,1)*TsTw_tran[1][2]
             + scale(x,y,2)*TsTw_tran[2][2]);
-                            
-
 
   // Weighted radial basis function for gamut mapping
   Func rbf_ctrl_pts("rbf_ctrl_pts");
@@ -249,7 +251,6 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
         coefs[2][2]*rev_tonemap(x,y,1) + coefs[3][2]*rev_tonemap(x,y,2))
                             , 0);
 
-
   // Reverse color map and white balance transform
   Func rev_transform("rev_transform");
     rev_transform(x,y,c) = cast<uint8_t>( 256.0f * max( select(
@@ -300,7 +301,7 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
   rev_tonemap.compile_jit();
 
   ////////////////////////////////////////////////////////////////////////
-  // Realization
+  // Realization (actual computation)
 
   double t1, t2;
   t1 = current_time();
@@ -342,7 +343,6 @@ int run_pipeline(bool direction, bool full, int patchsize, int xstart, int ystar
   // Save the output
 
   save_image(output, "output.png");
-
 
   return 0;
 }
