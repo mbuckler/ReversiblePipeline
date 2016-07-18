@@ -24,7 +24,7 @@
   5) Then execute the code with the ImgPipe command
     > ./ImgPipe
 
-  6) Observe your output displayed in this directory
+  6) Observe your output file(s) in this directory
 
 #####################################################################
 # Directory contents
