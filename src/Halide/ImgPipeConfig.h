@@ -18,11 +18,28 @@
 
 // Demosaiced raw input (to forward pipeline)
 char demosaiced_image[] = 
-"../../imgs/NikonD7000FL/DSC_0916.NEF.raw_1C.tiff.demosaiced.png";
+"../../imgs/NikonD7000FL/DSC_0916.NEF.demos_3C.png";
 
-// Jpeg input (to backward pipeline)
+// Jpeg input to backward pipeline. Must be converted to png
 char jpg_image[] =
-"../../imgs/NikonD7000FL/DSC_0916.JPG.png";
+"../../imgs/NikonD7000FL/DSC_0916.png";
+
+// Process the full image?
+// true:  process the full image, ignore patch parameters
+// false: process only the patch defined by the patch parameters
+bool full = false;
+
+///////////////////////////////////////////////////////////////
+// Patch Parameters
+///////////////////////////////////////////////////////////////
+
+// The width and height of the patch (in pixels)
+int patchsize = 1;
+
+// The x and y location of the upper left corner
+// of the patch to be processed
+int xstart    = 551;
+int ystart    = 2751; 
 
 ///////////////////////////////////////////////////////////////
 // Camera Model Parameters
@@ -42,36 +59,6 @@ int wb_index =
 const int num_ctrl_pts = 
 3702;
 
-///////////////////////////////////////////////////////////////
-// Patches to test 
-///////////////////////////////////////////////////////////////
 
-// Patch start locations
-// [xstart, ystart]
-//
-// NOTE: These start locations must align with the demosiac 
-// pattern start if using the version of this pipeline with
-// demosaicing
 
-const int patchstarts[12][2] = {
-  {551,  2751},
-  {1001, 2751},
-  {1501, 2751},
-  {2001, 2751},
-  {551,  2251},
-  {1001, 2251},
-  {1501, 2251},
-  {2001, 2251},
-  {551,  1751},
-  {1001, 1751},
-  {1501, 1751},
-  {2001, 1751}
-};
 
-// Height and width of patches
-const int patchsize = 
-10;
-
-// Number of patches to test
-const int patchnum  = 
-1;
