@@ -15,3 +15,37 @@ Original Project Page:
 Model Format Readme:
 * http://www.comp.nus.edu.sg/~brown/radiometric_calibration/datasets/Model_param/readme.pdf
 
+
+/////////////////////////////////////////////////////////////////////
+// Pipeline Implementation Descriptions
+/////////////////////////////////////////////////////////////////////
+
+* Strict Forward Pipeline
+
+A forward only pipeline which displays intermediate as well as final
+outputs is provided in the src/scripts directory. Use this if you 
+want a fast forward pipeline but dont need to emulate a specific
+camera model or reverse the processing. This implementation uses
+LibRaw and OpenCV.
+
+* Reversible Matlab Pipeline
+
+This implementation can be found in src/Matlab. Use this pipeline
+if you would like to use one of the available forward and backward
+camera pipeline models, aren't concerned about speed, and would 
+like to take advantage of Matlab's many pre-built image processing 
+tools. Note that this implementation is prohibitively slow 
+if you would like to process large images. Its default is to do 
+patch based processing to enable a reasonable run time.
+
+* Reversible Halide Pipeline
+
+This can be found in src/Halide. Use this pipeline if you want to 
+process full high resolution images with both a backward and 
+forward image processing pipeline implementation. The model is 
+fully implemented with Halide Funcs, and some basic scheduling
+for loop unrolling and pre-computation is provided. Scheduling for
+paralellism on the CPU or GPU can be easily added by the user.
+Do note that while this implementation is much faster than Matlab,
+it will take close to 10 minutes to process a 5000x3000 pixel image.
+
