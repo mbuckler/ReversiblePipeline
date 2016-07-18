@@ -16,9 +16,7 @@ Model Format Readme:
 * http://www.comp.nus.edu.sg/~brown/radiometric_calibration/datasets/Model_param/readme.pdf
 
 
-/////////////////////////////////////////////////////////////////////
-// Pipeline Implementation Descriptions
-/////////////////////////////////////////////////////////////////////
+## Pipeline Implementation Descriptions
 
 * Strict Forward Pipeline
 
@@ -49,18 +47,14 @@ paralellism on the CPU or GPU can be easily added by the user.
 Do note that while this implementation is much faster than Matlab,
 it will take close to 10 minutes to process a 5000x3000 pixel image.
 
-/////////////////////////////////////////////////////////////////////
-// General Use Instructions
-/////////////////////////////////////////////////////////////////////
+## General Use Instructions
 
 Instructions for using all of the different pieces of the pipeline
 can be found in readmes like this one within the appropriate 
 directories. All code has been tested with Ubuntu 14.04, but with
 small edits to makefiles all code should work with OS X as well.
 
-/////////////////////////////////////////////////////////////////////
-// Dependencies
-/////////////////////////////////////////////////////////////////////
+## Dependencies
 
 * LibRaw (for preprocessing)
 * OpenCV (for preprocessing)
