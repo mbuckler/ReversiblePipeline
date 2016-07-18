@@ -4,20 +4,27 @@
 #####################################################################
 
 #####################################################################
-# How to build
+# How to use
 #####################################################################
 
-Install Halide, update the Makefile with the location of your 
-Halide installation
+  1) Install Halide in ~/packages/Halide/. Alternatively, install in 
+     a directory of your choice and update the makefile.
+    Halide docs: http://halide-lang.org/index.html#gettingstarted
 
-Update ImgPipeConfig.h to account for any changes you would like
-> vim ImgPipeConfig.h
+  2) If you would like to run the forward version of the pipeline
+     on a new image, go to src/scripts and run the RawPreprocessor
+     on the raw image to demosaic it and write it to a png. 
 
-In this directory, run make
-> make
+  3) Update ImgPipeConfig.h to account for any changes you would like
+    > vim ImgPipeConfig.h
 
-Then execute the code with the ImgPipe command
-> ./ImgPipe
+  4) In this directory, run make
+    > make
+
+  5) Then execute the code with the ImgPipe command
+    > ./ImgPipe
+
+  6) Observe your output displayed in this directory
 
 #####################################################################
 # Directory contents
@@ -46,5 +53,3 @@ Helper file for determining computation speed
 
 A few changes may be needed to use the Makefile on non Linux
 distributions
-
-Halide can only load and store png images
