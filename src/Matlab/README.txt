@@ -1,39 +1,44 @@
-This is the Matlab implementation of the pipeline. If you are 
-only interested in running code with the provided images and model,
-then all you need to do is run ImgPipe_Matlab.m. If you would
-like to run with other images, you will need some details about
-the images, and then will need to perform a Raw to Tiff conversion.
 
+#####################################################################
+# Matlab implementation of the forward and backward pipeline
+#####################################################################
 
-* Code changes
+#####################################################################
+# How to use 
+#####################################################################
 
-1) Point the Matlab code to the folder where your images are
+Directions below are for using this pipeline with new images,
+If you are only interested in running with the provided images 
+and model, then all you need to do is run ImgPipe_Matlab.m. 
 
-2) Point the Matlab code to where the model is stored
+  1) Install Matlab
+    Matlab docs: http://www.mathworks.com/help/install/ug/install-mathworks-software.html
 
-3) The default test sites and sizes may not work for your image.
-Change them to wherever you would like to test.
+  2) Run the raw preprocessor in src/scripts. Note that matlab
+     wants the scaled but not demosaiced version. This will have
+     an extension of .raw_1C.tiff, not .demos_3C.png.
 
-4) Raw image mosaic pattern: Not all cameras have the same pixel 
-alignment. Ensure that the forward and backward pipelines have
-the right pattern.
+  3) Edit any points within the matlab code that you would like
+     to change. This might include:
+     * Where your processed images are
+     * Where your camera model is stored
+     * The patches to test in your image. Ensure that your xstart and
+       ystart align with the start of the bayer mosaic pattern.
+     * The raw image mosaic pattern. Not all cameras have the same pixel 
+       alignment. Ensure that the forward and backward pipelines have
+       the right pattern.
 
-5) Raw image scale: Not all cameras have the same output bitwidth.
-Change the scale values to scale up to 16 bits.
+  4) Run ImgPipe_Matlab.m
 
+  5) Observe your output in src/Matlab/pipe_results/
 
-* Raw to Tiff conversion
+#####################################################################
+# Pipeline Results Folder Contents 
+#####################################################################
 
-To convert from your raw file format to tiff files which can be 
-read by Matlab, follow these steps. Note that you will need 
-OpenCV and LibRaw installed. For more information see RAW2TIFF.cpp
-
-1) Compile the converter
-> cd ReversiblePipeline/src/Matlab/
-> make
-
-2) Convert your file
-> ./RAW2TIFF <path-to-image>/<image-file-name>
-
-This will create a new tiff file in the input image's directory
-by reformatting (but not scaling or processing) the input raw image.
+After running the pipeline you will see a new folder created in this
+directory called pipe_results. In this directory you will have folders
+for forward results and images as well as backward results and images.
+The result text files contain values and error metrics for each of 
+the patches which have been tested. The image folders contain the 
+image outputs of each of the respective pipelines.
