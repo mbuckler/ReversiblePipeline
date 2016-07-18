@@ -25,20 +25,11 @@
 //
 /////////////////////////////////////////////////////////////////////////
 //
-//  How to use:
-//    1) Install LibRaw and OpenCV
-//      LibRaw docs: http://www.libraw.org/docs/API-CXX-eng.html
-//      OpenCV docs: http://docs.opencv.org/3.1.0/
-//    2) Change to this directory (ReversiblePipeline/src/scripts)
-//    3) Compile with the provided Makefile
-//      > make
-//    4) Determine the bitdepth of your raw input file
-//    5) Run the script
-//      > ./RawPreproc path/to/image <raw file bitdepth>
-//      example:
-//      > ./RawPreproc ../../imgs/NikonD7000FL/DSC_0916.NEF 14
+// NOTE: You may need to change the demosaic pattern. It is different
+//       for every camera, so be sure to check.
 //
 /////////////////////////////////////////////////////////////////////////
+
 
 #include <stdio.h>
 #include <stdlib.h>
