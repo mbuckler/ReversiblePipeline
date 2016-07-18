@@ -37,6 +37,9 @@ Loads all information from the camera model
 A few linear algebra functions. Implementing them here prevents
 the need to install YAL (Yet Another Library)
 
+* clock.h
+Helper file for determining computation speed
+
 #####################################################################
 # Additional notes
 #####################################################################
