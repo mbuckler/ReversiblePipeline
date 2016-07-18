@@ -1,4 +1,5 @@
 /////////////////////////////////////////////////////////////////////////
+//
 //  Image Processing Pipeline Simulator
 //
 //    This code simulates the image processing pipeline from sensor to 
