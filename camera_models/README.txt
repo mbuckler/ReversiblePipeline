@@ -10,10 +10,9 @@
 #####################################################################
 
 This directory contains model parameters for various camera pipelines.
-Models were created by Haiting Lin, Michael Brown,
-and others. Their methodology can be found in the PAMI paper entitled
-"A New In-Camera Imaging Model for Color Computer Vision and its
-Application". 
+Models were created with the methodology shown in "A New In-Camera 
+Imaging Model for Color Computer Vision and its Application". More
+models can be found at the links below.
 
 
 #####################################################################
