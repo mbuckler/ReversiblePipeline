@@ -280,24 +280,17 @@ int run_pipeline(bool direction) {
   rev_rbf_biases.reorder(c,x,y).bound(c,0,3).unroll(c);
   rev_tonemap.reorder(c,x,y).bound(c,0,3).unroll(c);
 
-  // Compute these stages ahead of time and store their values
-  transform.compute_root();
-  rbf_ctrl_pts.compute_root();
-  rbf_biases.compute_root();
+  // Go pixel by pixel, store intermediate values for later use
+  transform.store_root().compute_at(tonemap,x);
+  rbf_ctrl_pts.store_root().compute_at(tonemap,x);
+  rbf_biases.store_root().compute_at(tonemap,x);
 
-  rev_tonemap.compute_root();
-  rev_rbf_ctrl_pts.compute_root();
-  rev_rbf_biases.compute_root();
+  rev_tonemap.store_root().compute_at(rev_transform,x);
+  rev_rbf_ctrl_pts.store_root().compute_at(rev_transform,x);
+  rev_rbf_biases.store_root().compute_at(rev_transform,x);
 
   // Use the just in time compiler
-  transform.compile_jit();
-  rbf_ctrl_pts.compile_jit();
-  rbf_biases.compile_jit();
   tonemap.compile_jit();
-
-  rev_transform.compile_jit();
-  rev_rbf_ctrl_pts.compile_jit();
-  rev_rbf_biases.compile_jit();
   rev_tonemap.compile_jit();
 
   ////////////////////////////////////////////////////////////////////////
