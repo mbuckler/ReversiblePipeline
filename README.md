@@ -9,6 +9,8 @@ learning a new model can be found at the original project
 page. This particular implementation was written by 
 Mark Buckler.
 
+If you are looking for the full Configurable & Reversible Imaging Pipeline (CRIP) as seen in the paper [Reconfiguring the Imaging Pipeline for Computer Vision](https://arxiv.org/abs/1705.04352) by Mark Buckler, Suren Jayasuriya, and Adrian Sampson, see [this repository](https://github.com/cucapra/approx-vision) instead.
+
 Original Project Page:
 * http://www.comp.nus.edu.sg/~brown/radiometric_calibration/
 
