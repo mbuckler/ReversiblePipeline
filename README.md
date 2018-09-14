@@ -58,7 +58,6 @@ small edits to makefiles all code should work with OS X as well.
 
 ## Dependencies
 
-* LibRaw (for preprocessing)
-* OpenCV (for preprocessing)
+* Development versions of LibRaw and OpenCV (for preprocessing)
 * Matlab (for Matlab pipeline)
 * Halide (for Halide pipeline)
